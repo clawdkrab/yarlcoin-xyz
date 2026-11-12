@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en"><!-- custom -->
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yarl ($YARL) on Solana</title>
+<meta name="description" content="Born on 4chan in 2015 with one job: replace the frog. A long yellow neck, a vacant stare, and pure internet history.">
+<meta property="og:title" content="Yarl ($YARL)"><meta property="og:description" content="Born on 4chan in 2015 with one job: replace the frog. A long yellow neck, a vacant stare, and pure internet history.">
+<meta property="og:image" content="banner.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yel:#FFEB00;--yel2:#f2d900;--yel3:#fff28a;--yel4:#d9c100;--ink:#111111;--card:#FFFBD1;--line:#c9b53a;--quote:#789922;--link:#34345c;--red:#af0a0f;--you:#cc1105;
+  --sy:0;--mx:0;--my:0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--yel);color:var(--ink);font-family:'Space Mono',ui-monospace,Menlo,monospace;font-size:15px;line-height:1.6;overflow-x:hidden}
+.disp,h1{font-family:'Bowlby One',system-ui,sans-serif;font-weight:400;line-height:1}
+a{color:var(--link);text-decoration:underline}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer}
+.px{transform:translate3d(calc(var(--mx) * var(--d,0) * 1px), calc(var(--sy) * var(--sp,0) * -1px + var(--my) * var(--d,0) * 1px), 0)}
+
+/* big yellow shapes drifting behind */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;background:var(--c)}
+.b1{--c:var(--yel2);width:70vmax;height:70vmax;left:-25vmax;top:10vh}
+.b2{--c:var(--yel3);width:46vmax;height:46vmax;right:-14vmax;top:-10vh;opacity:.9}
+.b3{--c:var(--yel4);width:30vmax;height:30vmax;right:18vw;top:70vh;opacity:.55}
+.b4{--c:var(--yel3);width:38vmax;height:38vmax;left:10vw;top:120vh;opacity:.8}
+.neck{position:absolute;left:55%;top:40vh;width:34vmax;height:80vmax;border-radius:48% 52% 10% 10%/30% 30% 70% 70%;background:var(--yel2);opacity:.9;transform-origin:50% 100%}
+.bigword{position:absolute;left:-2vw;top:55vh;font-family:'Bowlby One',system-ui,sans-serif;font-size:34vw;line-height:1;color:transparent;-webkit-text-stroke:2px rgba(17,17,17,.12);white-space:nowrap}
+
+.page{position:relative;z-index:1}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+/* board header */
+.boardhead{padding:10px 0 0;font-size:13px}
+.boardhead .nav{display:flex;flex-wrap:wrap;gap:4px 0;color:var(--ink)}
+.boardhead .nav span{opacity:.6}
+.boardhead .nav a{color:var(--ink);text-decoration:none;padding:0 2px}
+.boardhead .nav a:hover{text-decoration:underline}
+.boardtitle{text-align:center;margin:26px 0 8px}
+.boardtitle h1{font-size:clamp(38px,8vw,84px);color:var(--ink);letter-spacing:-.01em}
+.boardtitle h1 small{display:block;font-family:'Space Mono',monospace;font-size:14px;letter-spacing:.2em;margin-top:6px;font-weight:700}
+.boardtitle img{width:96px;height:96px;margin:0 auto 10px;border:2px solid var(--ink);background:var(--yel)}
+hr.sep{border:0;border-top:2px solid var(--ink);margin:10px 0 18px;opacity:.6}
+.threadnav{display:flex;justify-content:space-between;font-size:13px;margin:0 0 10px}
+.threadnav a{color:var(--ink);text-decoration:none}
+.threadnav a::before{content:"["}.threadnav a::after{content:"]"}
+
+/* posts */
+.post{position:relative;display:inline-block;max-width:100%;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);padding:6px 12px 10px;margin:0 0 10px 0;vertical-align:top;
+  transition:opacity .7s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.post.op{display:block;background:transparent;border:0;padding:0;margin-bottom:22px}
+.post.rv{opacity:0;transform:translateX(var(--from,40px))}
+.post.rv.in{opacity:1;transform:translateX(0)}
+.post .info{font-size:13px;margin-bottom:4px;display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline}
+.post .subject{color:#0f0c5d;font-weight:700}
+.post .name{color:#117743;font-weight:700}
+.post .name.you::after{content:" (You)";color:var(--you)}
+.post .time{opacity:.8}
+.post .no{text-decoration:none;color:var(--ink)}
+.post .no:hover{color:var(--red)}
+.post .replies{font-size:12px}
+.post .replies a{font-size:12px}
+.post .file{font-size:12px;margin:2px 0 4px;opacity:.85}
+.post .thumb{float:left;margin:4px 20px 6px 0;border:1px solid var(--line);background:#fff;max-width:min(42vw,260px)}
+.post .thumb.big{max-width:min(80vw,380px)}
+.post .thumb img{width:100%;height:auto}
+.post .body{font-size:15px;max-width:720px;white-space:normal}
+.post .body p{margin:0 0 .4em}
+.post .q{color:var(--quote)}
+.post .ql{color:var(--red);text-decoration:underline;font-weight:700}
+.post .body .big{font-family:'Bowlby One',system-ui,sans-serif;font-size:clamp(28px,5vw,54px);line-height:1;margin:8px 0 10px;color:var(--ink)}
+.post .body .big.red{color:var(--red)}
+.post .body .big em{font-style:normal;color:var(--yel4);-webkit-text-stroke:1.5px var(--ink)}
+.clr{clear:both}
+.post .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.btn{display:inline-block;text-decoration:none;background:var(--ink);color:var(--yel);padding:10px 18px;border:2px solid var(--ink);font-family:'Bowlby One',system-ui,sans-serif;font-size:16px;letter-spacing:.02em;transition:transform .15s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:3px 3px 0 var(--ink);background:var(--yel);color:var(--ink)}
+.btn.alt{background:var(--yel);color:var(--ink)}
+.indent1{margin-left:min(6vw,40px)}
+.indent2{margin-left:min(12vw,80px)}
+.post.wide{display:block}
+
+/* CA post */
+.cabox{background:#fff;border:1px solid var(--line);padding:10px 12px;margin:6px 0 8px;font-weight:700;overflow-wrap:anywhere;font-size:14px;max-width:640px}
+.copy{background:var(--yel);border:2px solid var(--ink);padding:6px 14px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
+.copy:hover{background:var(--ink);color:var(--yel)}
+.camsg{font-size:12px;margin-left:8px;opacity:.8}
+
+/* tokenomics as a table post */
+table.tok{border-collapse:collapse;margin:6px 0;font-size:14px;max-width:560px}
+table.tok td{border:1px solid var(--line);padding:6px 10px;background:#fff}
+table.tok td:first-child{font-weight:700;background:var(--yel3)}
+
+/* how to buy ordered list */
+ol.how{margin:6px 0 4px 20px;max-width:640px}
+ol.how li{margin-bottom:6px}
+ol.how b{font-weight:700}
+
+/* gallery replies: image posts */
+.imgposts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-items:start}
+.imgposts .post{display:block;margin:0}
+.imgposts .thumb{max-width:100%;float:none;margin:4px 0 6px}
+.imgposts .thumb img{aspect-ratio:1;object-fit:cover}
+@media(max-width:620px){.imgposts{grid-template-columns:1fr}.post .thumb,.post .thumb.big{float:none;max-width:100%;margin:4px 0 8px}.post{display:block}.indent1{margin-left:12px}.indent2{margin-left:24px}}
+
+/* sticky "yarl." counter */
+.stickytag{position:fixed;right:14px;bottom:14px;z-index:5;background:var(--ink);color:var(--yel);font-family:'Bowlby One',system-ui,sans-serif;padding:8px 14px;font-size:18px;transform:rotate(-4deg)}
+
+footer{margin-top:30px;padding:22px 0 30px;border-top:2px solid var(--ink)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pill{text-decoration:none;color:var(--ink);border:2px solid var(--ink);padding:6px 12px;font-size:13px;font-weight:700;background:var(--card)}
+.pill:hover{background:var(--ink);color:var(--yel)}
+.disc{font-size:12px;opacity:.75;max-width:760px;line-height:1.5}
+.copyright{font-size:12px;opacity:.5;margin-top:10px}
+
+@media(prefers-reduced-motion:reduce){
+  .px{transform:none!important}
+  .post.rv{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="blob b1 px" style="--sp:.06;--d:-.01"></div>
+  <div class="bigword px" style="--sp:.10;--d:-.015">yarl.</div>
+  <div class="blob b2 px" style="--sp:.14;--d:.02"></div>
+  <div class="neck px" style="--sp:.22;--d:.03"></div>
+  <div class="blob b3 px" style="--sp:.3;--d:.04"></div>
+  <div class="blob b4 px" style="--sp:.18;--d:.025"></div>
+</div>
+
+<div class="page" id="top">
+<div class="wrap">
+
+  <div class="boardhead">
+    <div class="nav">
+      <span>[</span><a href="#top">yarl</a><span>/</span><a href="#lore">lore</a><span>/</span><a href="#tok">tok</a><span>/</span><a href="#how">how</a><span>/</span><a href="#gal">memes</a><span>]&nbsp;&nbsp;[</span><a href="#" target="_blank" rel="noopener">Buy $YARL</a><span>]</span>
+    </div>
+  </div>
+
+  <div class="boardtitle px" style="--sp:.08;--d:.004">
+    <img src="favicon.png" alt="">
+    <h1>/yarl/ - Yarl<small>$YARL ON SOLANA</small></h1>
+  </div>
+  <hr class="sep">
+
+  <div class="threadnav"><a href="#bottom">Bottom</a><span>Thread No.20151205</span><a href="#top">Top</a></div>
+
+  <!-- OP -->
+  <div class="post op">
+    <div class="file">File: <a href="hero.png" target="_blank">18.png</a> (412 KB, 1080x1080)</div>
+    <div class="thumb big"><img src="hero.png" alt="Yarl sitting on a bench, vacant stare"></div>
+    <div class="info"><span class="subject">There can be only Yarl</span> <span class="name">Anonymous</span> <span class="time">12/05/15(Sat)23:14:01</span> <a class="no" href="#top">No.20151205</a> <span class="replies"><a href="#r1">&gt;&gt;20151206</a> <a href="#r2">&gt;&gt;20151207</a> <a href="#r5">&gt;&gt;20151210</a></span></div>
+    <div class="body">
+      <div class="big">YARL.</div>
+      <p class="q">&gt;be anon, december 2015</p>
+      <p class="q">&gt;draw a yellow thing with a long neck in 40 seconds</p>
+      <p class="q">&gt;declare the frog dead</p>
+      <p>Born on 4chan in 2015 with one job: replace the frog. A long yellow neck, a vacant stare, and pure internet history.</p>
+      <p>Now on Solana. Same neck. Same stare.</p>
+      <div class="btnrow"><a class="btn" href="#" target="_blank" rel="noopener">Buy $YARL</a></div>
+    </div>
+    <div class="clr"></div>
+  </div>
+
+  <!-- CA reply -->
+  <div class="post rv wide" id="r1" style="--from:60px">
+    <div class="info"><span class="name you">Anonymous</span> <span class="time">12/05/15(Sat)23:14:40</span> <a class="no" href="#r1">No.20151206</a></div>
+    <div class="body">
+      <p><a class="ql" href="#top">&gt;&gt;20151205 (OP)</a></p>
+      <p>OP here. Contract address goes below. Anything else is a larp.</p>
+      <div class="cabox" id="caText">Contract address revealed at launch</div>
+      <button class="copy" id="copyBtn" type="button">copy CA</button><span class="camsg" id="caMsg">verify against the pinned X post</span>
+    </div>
+  </div>
+
+  <!-- lore replies -->
+  <div class="post rv indent1" id="lore" style="--from:-50px">
+    <div class="info"><span class="name">Anonymous</span> <span class="time">12/05/15(Sat)23:16:12</span> <a class="no" href="#lore">No.20151207</a></div>
+    <div class="body">
+      <p><a class="ql" href="#top">&gt;&gt;20151205 (OP)</a></p>
+      <p class="q">&gt;December 2015. An anon posts a crude yellow doodle with a long neck and a blank expression and declares the old frog dead: from now on, it's Yarl.</p>
+      <p>where were you when yarl rose?</p>
+    </div>
+  </div>
+
+  <div class="post rv indent2" id="r3" style="--from:90px">
+    <div class="file">File: <a href="logo.png" target="_blank">YARL LOGO.png</a> (88 KB, 1000x1000)</div>
+    <div class="thumb"><img src="logo.png" alt="Yarl logo, thinking pose"></div>
+    <div class="info"><span class="name">Anonymous</span> <span class="time">12/05/15(Sat)23:19:55</span> <a class="no" href="#r3">No.20151208</a></div>
+    <div class="body">
+      <p><a class="ql" href="#lore">&gt;&gt;20151207</a></p>
+      <p>The Yarlers went to work. Yarl in a viking helmet, Yarl in a tuxedo, giga Yarl, sad Yarl, Yarl staring at the rain. Crude on purpose, impossible to unsee, and always just a little bit off.</p>
+      <p class="q">&gt;mfw it's yarlin' outside</p>
+    </div>
+    <div class="clr"></div>
+  </div>
+
+  <div class="post rv indent1" id="r4" style="--from:-70px">
+    <div class="info"><span class="name">Anonymous</span> <span class="time">11/05/26(Thu)09:00:00</span> <a class="no" href="#r4">No.20260001</a></div>
+    <div class="body">
+      <p><a class="ql" href="#r3">&gt;&gt;20151208</a></p>
+      <p>Ten years later Yarl is back in the trenches. No roadmap, no VC, no team bag. Just a yellow internet relic and the same question: where were you when Yarl rose?</p>
+      <div class="big">there can be <em>only</em> Yarl.</div>
+    </div>
+  </div>
+
+  <!-- tokenomics -->
+  <div class="post rv wide" id="tok" style="--from:50px">
+    <div class="info"><span class="subject">tokenomics</span> <span class="name">Anonymous</span> <span class="time">11/05/26(Thu)09:02:31</span> <a class="no" href="#tok">No.20260002</a></div>
+    <div class="body">
+      <p class="q">&gt;asking for tokenomics on a yellow doodle coin</p>
+      <p>fine.</p>
+      <table class="tok">
+        <tr><td>Supply</td><td>1,000,000,000</td></tr>
+        <tr><td>Launch</td><td>Fair launch on pump.fun</td></tr>
+        <tr><td>Tax</td><td>0% buy / 0% sell</td></tr>
+        <tr><td>Liquidity</td><td>Auto-migrated &amp; burned by pump.fun</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- how to buy -->
+  <div class="post rv indent1" id="how" style="--from:-60px">
+    <div class="info"><span class="subject">how do i buy this</span> <span class="name">Anonymous</span> <span class="time">11/05/26(Thu)09:05:10</span> <a class="no" href="#how">No.20260003</a> <span class="replies"><a href="#r5">&gt;&gt;20260004</a></span></div>
+    <div class="body"><p>newfag here. how?</p></div>
+  </div>
+  <div class="post rv indent2 wide" id="r5" style="--from:80px">
+    <div class="info"><span class="name you">Anonymous</span> <span class="time">11/05/26(Thu)09:06:44</span> <a class="no" href="#r5">No.20260004</a></div>
+    <div class="body">
+      <p><a class="ql" href="#how">&gt;&gt;20260003</a></p>
+      <p>not spoonfeeding but ok:</p>
+      <ol class="how">
+        <li><b>Wallet.</b> Install Phantom or Solflare. Write the seed phrase on paper, not in the thread.</li>
+        <li><b>SOL.</b> Buy SOL on an exchange, send it to your wallet. Keep a bit for fees.</li>
+        <li><b>pump.fun.</b> Open <a href="#" target="_blank" rel="noopener">the $YARL page</a>, connect wallet, match the CA with <a class="ql" href="#r1">&gt;&gt;20151206</a>.</li>
+        <li><b>Swap.</b> SOL for $YARL. Confirm. Post "yarl." in the thread.</li>
+      </ol>
+      <p class="q">&gt;you're welcome</p>
+    </div>
+  </div>
+
+  <!-- gallery -->
+  <div class="post rv wide" id="gal" style="--from:40px">
+    <div class="info"><span class="subject">yarl dump</span> <span class="name">Anonymous</span> <span class="time">11/05/26(Thu)09:10:00</span> <a class="no" href="#gal">No.20260005</a></div>
+    <div class="body"><p>post yarls. on-model only.</p></div>
+  </div>
+  <div class="imgposts">
+    <div class="post rv" style="--from:-40px"><div class="file">File: 34.png (900x900)</div><div class="thumb"><img src="meme_01.jpg" alt="Yarl meme 1" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260006</a></div><div class="body"><p class="q">&gt;yarl uprising</p></div></div>
+    <div class="post rv" style="--from:40px"><div class="file">File: 54.png (900x900)</div><div class="thumb"><img src="meme_02.jpg" alt="Yarl meme 2" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260007</a></div><div class="body"><p>yarl.</p></div></div>
+    <div class="post rv" style="--from:-60px"><div class="file">File: 22.png (900x900)</div><div class="thumb"><img src="meme_03.jpg" alt="Yarl meme 3" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260008</a></div><div class="body"><p class="q">&gt;a little bit off</p></div></div>
+    <div class="post rv" style="--from:60px"><div class="file">File: 25.png (900x900)</div><div class="thumb"><img src="meme_04.jpg" alt="Yarl meme 4" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260009</a></div><div class="body"><p>saved</p></div></div>
+    <div class="post rv" style="--from:-40px"><div class="file">File: 29.png (900x900)</div><div class="thumb"><img src="meme_05.jpg" alt="Yarl meme 5" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260010</a></div><div class="body"><p class="q">&gt;it's yarlin' outside</p></div></div>
+    <div class="post rv" style="--from:40px"><div class="file">File: 47.png (900x900)</div><div class="thumb"><img src="meme_06.jpg" alt="Yarl meme 6" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260011</a></div><div class="body"><p>kek</p></div></div>
+    <div class="post rv" style="--from:-60px"><div class="file">File: 50.png (900x900)</div><div class="thumb"><img src="meme_07.jpg" alt="Yarl meme 7" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260012</a></div><div class="body"><p class="q">&gt;crude on purpose</p></div></div>
+    <div class="post rv" style="--from:60px"><div class="file">File: 36.png (900x900)</div><div class="thumb"><img src="meme_08.jpg" alt="Yarl meme 8" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260013</a></div><div class="body"><p>yarl.</p></div></div>
+    <div class="post rv" style="--from:-40px"><div class="file">File: 55.png (900x900)</div><div class="thumb"><img src="meme_09.jpg" alt="Yarl meme 9" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260014</a></div><div class="body"><p class="q">&gt;impossible to unsee</p></div></div>
+    <div class="post rv" style="--from:40px"><div class="file">File: 40.png (900x900)</div><div class="thumb"><img src="meme_10.jpg" alt="Yarl meme 10" loading="lazy"></div><div class="info"><span class="name">Anonymous</span> <a class="no" href="#gal">No.20260015</a></div><div class="body"><p>there can be only Yarl</p></div></div>
+  </div>
+
+  <div class="post rv wide" id="bottom" style="--from:50px;margin-top:10px">
+    <div class="info"><span class="name you">Anonymous</span> <span class="time">11/05/26(Thu)09:30:00</span> <a class="no" href="#bottom">No.20260016</a></div>
+    <div class="body">
+      <p><a class="ql" href="#top">&gt;&gt;20151205 (OP)</a></p>
+      <div class="big red">bump.</div>
+      <div class="btnrow"><a class="btn" href="#" target="_blank" rel="noopener">Buy $YARL</a></div>
+    </div>
+  </div>
+
+  <div class="threadnav" style="margin-top:14px"><a href="#top">Return</a><a href="#top">Top</a></div>
+
+  <footer>
+    <div class="pills">
+      <a class="pill" href="#" target="_blank" rel="noopener">X / Twitter</a>
+      
+      <a class="pill" href="#" target="_blank" rel="noopener">pump.fun</a>
+      <a class="pill" href="#" target="_blank" rel="noopener">DexScreener</a>
+    </div>
+    <p class="disc">$YARL is a memecoin with no intrinsic value or expectation of financial return. It is not affiliated with, endorsed by, or connected to any person, brand or company referenced in its memes. There is no team roadmap or promise of profit. Crypto is volatile; only spend what you can afford to lose.</p>
+    <p class="copyright">Yarlers. Yarl was drawn by anonymous users; nobody owns him. yarl.</p>
+  </footer>
+</div>
+</div>
+<div class="stickytag disp" aria-hidden="true">yarl.</div>
+
+<script>
+(function(){
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root=document.documentElement;
+  var sy=0,mx=0,my=0,ticking=false;
+  function frame(){ticking=false;root.style.setProperty('--sy',sy.toFixed(1));root.style.setProperty('--mx',mx.toFixed(1));root.style.setProperty('--my',my.toFixed(1));}
+  function req(){if(!ticking){ticking=true;requestAnimationFrame(frame);}}
+  if(!reduce){
+    window.addEventListener('scroll',function(){sy=window.scrollY||0;req();},{passive:true});
+    window.addEventListener('pointermove',function(e){mx=(e.clientX/window.innerWidth-.5)*500;my=(e.clientY/window.innerHeight-.5)*300;req();},{passive:true});
+    sy=window.scrollY||0;req();
+  }
+  var posts=document.querySelectorAll('.post.rv');
+  if(reduce||!('IntersectionObserver' in window)){posts.forEach(function(p){p.classList.add('in');});}
+  else{
+    var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});},{threshold:.12});
+    posts.forEach(function(p){io.observe(p);});
+  }
+  var CA='';
+  var btn=document.getElementById('copyBtn'),msg=document.getElementById('caMsg');
+  btn.addEventListener('click',function(){
+    if(!CA){msg.textContent='nothing to copy yet. CA drops at launch.';return;}
+    try{
+      navigator.clipboard.writeText(CA).then(function(){btn.textContent='copied';msg.textContent='CA copied.';setTimeout(function(){btn.textContent='copy CA';},2000);})
+      .catch(function(){msg.textContent='copy failed. select it and copy manually.';});
+    }catch(e){msg.textContent='copy failed. select it and copy manually.';}
+  });
+})();
+</script>
+</body></html>
